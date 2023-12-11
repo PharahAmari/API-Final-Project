@@ -18,7 +18,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 
 from datetime import datetime
-from tqdm import tqdm
 
 import lazy_loader as lazy
 resampy = lazy.load("resampy")
@@ -56,6 +55,12 @@ def create_model():
 
     return model
 
+#####################################################
+### ----------------- CONSTANTS ----------------- ###
+#####################################################
+
+# change according to your system
+DATASET_PATH = 'C:/Users/wilru/Documents/LU/S3/API/P1/API-Final-Project/API/dataset_api.json'
 
 #####################################################
 ### ----------------- FUNCTIONS ----------------- ###
@@ -82,7 +87,7 @@ def features_extractor(file):
 ### ----------------- LOAD DATA ----------------- ###
 #####################################################
 
-with open('dataset_api.json', 'r') as file:
+with open(DATASET_PATH, 'r') as file:
     # 从文件中加载JSON数据
     data = json.load(file)
 
