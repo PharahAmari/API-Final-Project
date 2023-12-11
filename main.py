@@ -60,18 +60,18 @@ def create_model():
 #####################################################
 
 # change according to your system
-DATASET_PATH = 'C:/Users/wilru/Documents/LU/S3/API/P1/API-Final-Project/API/dataset_api.json'
+DATASET_PATH = 'C:/Users/wilru/Documents/LU/S3/API/P1/API-Final-Project/dataset_api.json'
 
 #####################################################
 ### ----------------- FUNCTIONS ----------------- ###
 #####################################################
 
-def extract_data(api_data):
+def extract_data(data):
     label_list = []
     file_list = []
-    for i in range(len(api_data)):
-        for file in api_data[i]['files']:
-            label_list.append(api_data[i]['class'])
+    for i in range(len(data)):
+        for file in data[i]['files']:
+            label_list.append(data[i]['class'])
             file_list.append(file)
     return label_list, file_list
 
@@ -91,8 +91,8 @@ with open(DATASET_PATH, 'r') as file:
     # 从文件中加载JSON数据
     data = json.load(file)
 
-api_data = data['api_dataset']
-label_list, file_list = extract_data(api_data)
+label_list, file_list = extract_data(data)
+print('System: Data loaded,')
 
 extracted_features=[]
 for i in range(len(file_list)):
@@ -101,15 +101,18 @@ for i in range(len(file_list)):
     data = features_extractor("." + file_list[i])
     extracted_features.append([data, final_class_labels])
 
-extracted_features_df=pd.DataFrame(extracted_features,columns=['feature','class'])
-X=np.array(extracted_features_df['feature'].tolist())
-y=np.array(extracted_features_df['class'].tolist())
+extracted_features_df = pd.DataFrame(extracted_features,columns=['feature','class'])
+X = np.array(extracted_features_df['feature'].tolist())
+y = np.array(extracted_features_df['class'].tolist())
 
-labelencoder=LabelEncoder()
-y=to_categorical(labelencoder.fit_transform(y))
-X_train,X_test,y_train,y_test=train_test_split(X,y,test_size=0.2,random_state=0)
+print('System: Extracted features.')
+
+labelencoder = LabelEncoder()
+y = to_categorical(labelencoder.fit_transform(y))
+X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.2,random_state=0)
 
 num_labels=y.shape[1]
+print('System: Generated datasets for trianing.')
 
 ##########################################################
 ### ----------------- TRAINING MODEL ----------------- ###
@@ -125,13 +128,14 @@ checkpointer = ModelCheckpoint(filepath='saved_models/audio_classification.hdf5'
 
 # Create the model and print its structure
 model = create_model()
+print('System: Model created.')
 print(model.summary())
 
 # Train
 start = datetime.now()
 model.fit(X_train, y_train, batch_size=num_batch_size, epochs=num_epochs, validation_data=(X_test, y_test), callbacks=[checkpointer], verbose=1)
 duration = datetime.now() - start
-print("Training completed in time: ", duration)
+print("System: Training completed in time: ", duration)
 
 # Save model training
 with open('./models/model_v01.pkl', 'wb') as f:
