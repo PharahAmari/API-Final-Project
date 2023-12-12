@@ -594,7 +594,6 @@
     {
         "class": "doorbell",
         "files": [
-            "/audio/doorbell/._212128.wav",
             "/audio/doorbell/110165.wav",
             "/audio/doorbell/131641_0.wav",
             "/audio/doorbell/131641_1.wav",
@@ -1242,7 +1241,6 @@
             "/audio/routine/Cat/69131_4.wav",
             "/audio/routine/Cat/73345.wav",
             "/audio/routine/Cat/77316.wav",
-            "/audio/routine/Dishes/._12826.wav",
             "/audio/routine/Dishes/105023_0.wav",
             "/audio/routine/Dishes/105023_1.wav",
             "/audio/routine/Dishes/105023_2.wav",
