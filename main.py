@@ -1,21 +1,20 @@
-import os
 import json
-import pickle
 import librosa
 import numpy as np
 import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 
-import tensorflow as tf
-from tensorflow import keras
 from keras.models import Sequential
-from keras.layers import Dense,Dropout,Activation,Flatten
-from keras.optimizers import Adam
+from keras.layers import Dense, Dropout, Activation
 from keras.callbacks import ModelCheckpoint
 from keras.utils import to_categorical
 
-from sklearn import metrics
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import classification_report, confusion_matrix, ConfusionMatrixDisplay
+
+from scikitplot.metrics import plot_roc
 
 from datetime import datetime
 
@@ -23,15 +22,15 @@ import lazy_loader as lazy
 resampy = lazy.load("resampy")
 
 
-###########################################################
-### ----------------- MODEL STRUCTURE ----------------- ###
-###########################################################
+            #####################################################
+            ### -------------- MODEL STRUCTURE -------------- ###
+            #####################################################
 
-def create_model():
-    model=Sequential()
+def create_model(num_labels):
+    model = Sequential()
 
     # First layer
-    model.add(Dense(100,input_shape=(40,)))
+    model.add(Dense(100, input_shape=(40,)))
     model.add(Activation('relu'))
     model.add(Dropout(0.5))
 
@@ -39,7 +38,7 @@ def create_model():
     model.add(Dense(200))
     model.add(Activation('relu'))
     model.add(Dropout(0.5))
-    
+
     # Third layer
     model.add(Dense(100))
     model.add(Activation('relu'))
@@ -55,16 +54,19 @@ def create_model():
 
     return model
 
-#####################################################
-### ----------------- CONSTANTS ----------------- ###
-#####################################################
 
-# change according to your system
+            #####################################################
+            ### ----------------- CONSTANTS ----------------- ###
+            #####################################################
+
+# Change according to your system
 DATASET_PATH = 'C:/Users/wilru/Documents/LU/S3/API/P1/API-Final-Project/dataset_api.json'
+TEST_DATASET_PATH = 'C:/Users/wilru/Documents/LU/S3/API/P1/API-Final-Project/test_dataset.json'
 
-#####################################################
-### ----------------- FUNCTIONS ----------------- ###
-#####################################################
+
+            #####################################################
+            ### ----------------- FUNCTIONS ----------------- ###
+            #####################################################
 
 def extract_data(data):
     label_list = []
@@ -82,26 +84,47 @@ def features_extractor(file):
 
     return mfccs_scaled_features
 
+def plot_confusion_matrix(y_true, y_pred, classes='auto', figsize=(10, 10), text_size=12): 
+    # Generate confusion matrix 
+    cm = confusion_matrix(y_true, y_pred)
+    
+    # Set plot size
+    plt.figure(figsize=figsize)
 
-#####################################################
-### ----------------- LOAD DATA ----------------- ###
-#####################################################
+    # Create confusion matrix heatmap
+    disp = sns.heatmap(
+        cm, annot=True, cmap='Greens',
+        annot_kws={"size": text_size}, fmt='g',
+        linewidths=1, linecolor='black', clip_on=False,
+        xticklabels=classes, yticklabels=classes)
+    
+    # Set title and axis labels
+    disp.set_title('Confusion Matrix', fontsize=24)
+    disp.set_xlabel('Predicted Label', fontsize=20) 
+    disp.set_ylabel('True Label', fontsize=20)
+    plt.yticks(rotation=0) 
+
+    # Plot confusion matrix
+    plt.show()
+
+            #####################################################
+            ### ----------------- LOAD DATA ----------------- ###
+            #####################################################
 
 with open(DATASET_PATH, 'r') as file:
-    # 从文件中加载JSON数据
+    # Load JSON data from file
     data = json.load(file)
 
 label_list, file_list = extract_data(data)
-print('System: Data loaded,')
+print('System: Data loaded.')
 
-extracted_features=[]
+extracted_features = []
 for i in range(len(file_list)):
-
     final_class_labels = label_list[i]
     data = features_extractor("." + file_list[i])
     extracted_features.append([data, final_class_labels])
 
-extracted_features_df = pd.DataFrame(extracted_features,columns=['feature','class'])
+extracted_features_df = pd.DataFrame(extracted_features, columns=['feature', 'class'])
 X = np.array(extracted_features_df['feature'].tolist())
 y = np.array(extracted_features_df['class'].tolist())
 
@@ -109,39 +132,39 @@ print('System: Extracted features.')
 
 labelencoder = LabelEncoder()
 y = to_categorical(labelencoder.fit_transform(y))
-X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.2,random_state=0)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
 
-num_labels=y.shape[1]
-print('System: Generated datasets for trianing.')
+num_labels = y.shape[1]
+print('System: Generated datasets for training.')
 
-##########################################################
-### ----------------- TRAINING MODEL ----------------- ###
-##########################################################
+
+            #####################################################
+            ### ------------------- TRAIN ------------------- ###
+            #####################################################
 
 # Hyperparameters
-num_epochs = 100
-num_batch_size = 2
-
-# Save model config
-checkpointer = ModelCheckpoint(filepath='saved_models/audio_classification.hdf5',
-                               verbose=1, save_best_only=True)
+num_epochs = 50
+num_batch_size = 4
 
 # Create the model and print its structure
-model = create_model()
+model = create_model(num_labels)
 print('System: Model created.')
 print(model.summary())
 
+# Save model config
+checkpointer = ModelCheckpoint(filepath=f'saved_models/audio_class_ep{num_epochs}_bs{num_batch_size}.hdf5',
+                               verbose=1, save_best_only=True)
 # Train
 start = datetime.now()
-model.fit(X_train, y_train, batch_size=num_batch_size, epochs=num_epochs, validation_data=(X_test, y_test), callbacks=[checkpointer], verbose=1)
+model.fit(X_train, y_train, batch_size=num_batch_size, epochs=num_epochs, validation_data=(X_test, y_test),
+          callbacks=[checkpointer], verbose=1)
 duration = datetime.now() - start
 print("System: Training completed in time: ", duration)
 
 # Save model training
-with open('./models/model_v01.pkl', 'wb') as f:
-    pickle.dump(model, f)
+model.save(f'saved_models/audio_class_trained_ep{num_epochs}_bs{num_batch_size}.h5')
 
-# # Load model
-# with open("model.pkl", "rb") as f:
-#     model = pickle.load(f)
-
+# Plot confusion matrix
+predictions = model.predict(X_test) 
+pred_classes = np.argmax(predictions, axis = 1)
+plot_confusion_matrix(np.argmax(y_test, axis=1), pred_classes, classes=labelencoder.classes_)
