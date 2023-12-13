@@ -14,7 +14,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import classification_report, confusion_matrix, ConfusionMatrixDisplay
 
-from scikitplot.metrics import plot_roc
+# from scikitplot.metrics import plot_roc
 
 from datetime import datetime
 
@@ -60,8 +60,8 @@ def create_model(num_labels):
             #####################################################
 
 # Change according to your system
-DATASET_PATH = 'C:/Users/wilru/Documents/LU/S3/API/P1/API-Final-Project/dataset_api.json'
-TEST_DATASET_PATH = 'C:/Users/wilru/Documents/LU/S3/API/P1/API-Final-Project/test_dataset.json'
+DATASET_PATH = 'dataset_api.json'
+TEST_DATASET_PATH = 'test_dataset.json'
 
 
             #####################################################
@@ -83,7 +83,16 @@ def features_extractor(file):
     mfccs_scaled_features = np.mean(mfccs_features.T, axis=0)
 
     return mfccs_scaled_features
+def plot_classes(class_data):
+    plt.figure(figsize=(15, 8))
+    plt.title('Alarm Sounds Class Distribution', fontsize=22)
+    class_distribution = class_data.value_counts().sort_values()
+    palette = sns.color_palette("husl", len(class_distribution.values))
+    sns.barplot(x=class_distribution.values,
+                y=list(class_distribution.keys()),
+                orient="h", palette=palette)
 
+    plt.show()
 def plot_confusion_matrix(y_true, y_pred, classes='auto', figsize=(10, 10), text_size=12): 
     # Generate confusion matrix 
     cm = confusion_matrix(y_true, y_pred)
@@ -127,7 +136,7 @@ for i in range(len(file_list)):
 extracted_features_df = pd.DataFrame(extracted_features, columns=['feature', 'class'])
 X = np.array(extracted_features_df['feature'].tolist())
 y = np.array(extracted_features_df['class'].tolist())
-
+plot_classes(extracted_features_df['class'])
 print('System: Extracted features.')
 
 labelencoder = LabelEncoder()
@@ -165,6 +174,6 @@ print("System: Training completed in time: ", duration)
 model.save(f'saved_models/audio_class_trained_ep{num_epochs}_bs{num_batch_size}.h5')
 
 # Plot confusion matrix
-predictions = model.predict(X_test) 
+predictions = model.predict(X_test)
 pred_classes = np.argmax(predictions, axis = 1)
 plot_confusion_matrix(np.argmax(y_test, axis=1), pred_classes, classes=labelencoder.classes_)
