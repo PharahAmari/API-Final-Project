@@ -6,7 +6,7 @@ Requirements:
 
 
 
-Georgios Doukeris
-Pelagia Ilektra Evrenoglou
-Guillem Casals Ruesga
+Georgios Doukeris,
+Pelagia Ilektra Evrenoglou,
+Guillem Casals Ruesga,
 Dehan Zhang
